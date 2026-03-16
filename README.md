@@ -4,6 +4,7 @@ Analyse de l'exposition de chaque métier de l'économie française à l'intelli
 
 Inspiré par le projet [karpathy.ai/jobs](https://karpathy.ai/jobs/).
 
+![aperçu](image.png)
 ## Ce que contient ce dépôt
 
 Le référentiel ROME 4.0 couvre **1 584 métiers** couvrant tous les secteurs de l'économie française, avec des données sur les offres d'emploi, les projets de recrutement, les difficultés de recrutement, et les compétences associées. Chaque métier est scoré par un LLM pour son exposition à l'IA, et visualisé dans une treemap interactive.
