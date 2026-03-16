@@ -70,14 +70,74 @@ def main():
             except (ValueError, TypeError):
                 pass
 
+        salary_min = None
+        if row.get("salary_min"):
+            try:
+                val = int(row["salary_min"])
+                if 10000 <= val <= 300000:
+                    salary_min = val
+            except (ValueError, TypeError):
+                pass
+
+        salary_max = None
+        if row.get("salary_max"):
+            try:
+                val = int(row["salary_max"])
+                if 10000 <= val <= 300000:
+                    salary_max = val
+            except (ValueError, TypeError):
+                pass
+
+        taux_saisonnier = None
+        if row.get("taux_saisonnier"):
+            try:
+                taux_saisonnier = float(row["taux_saisonnier"])
+            except (ValueError, TypeError):
+                pass
+
+        projets_difficiles = None
+        if row.get("projets_difficiles"):
+            try:
+                projets_difficiles = int(row["projets_difficiles"])
+            except (ValueError, TypeError):
+                pass
+
+        nb_competences_base = None
+        if row.get("nb_competences_base"):
+            try:
+                nb_competences_base = int(row["nb_competences_base"])
+            except (ValueError, TypeError):
+                pass
+
+        nb_competences_specifiques = None
+        if row.get("nb_competences_specifiques"):
+            try:
+                nb_competences_specifiques = int(row["nb_competences_specifiques"])
+            except (ValueError, TypeError):
+                pass
+
+        nb_appellations = None
+        if row.get("nb_appellations"):
+            try:
+                nb_appellations = int(row["nb_appellations"])
+            except (ValueError, TypeError):
+                pass
+
         data.append({
             "title": row["title"],
             "slug": slug,
             "code_rome": row.get("code_rome", ""),
+            "salary_min": salary_min,
             "salary": salary,
+            "salary_max": salary_max,
             "nb_offres": nb_offres,
             "projets_recrutement": projets_recrutement,
+            "projets_difficiles": projets_difficiles,
             "taux_difficulte": taux_difficulte,
+            "taux_saisonnier": taux_saisonnier,
+            "nb_competences_base": nb_competences_base,
+            "nb_competences_specifiques": nb_competences_specifiques,
+            "nb_appellations": nb_appellations,
             "exposure": score.get("exposure"),
             "exposure_rationale": score.get("rationale"),
         })
