@@ -18,7 +18,6 @@ pages/
 # French adaptation data (reproducible via pipeline)
 fr/data/
 fr/pages/
-fr/site/data.json
 
 # Embeddings (unused in final visualization)
 embed.py
