@@ -1,0 +1,8 @@
+python fr/score_fr.py --start 0 --end 64 --output fr/data/scores_shards/missing_1.json --delay 0.2
+python fr/score_fr.py --start 270 --end 378 --output fr/data/scores_shards/missing_2.json --delay 0.2
+python fr/score_fr.py --start 461 --end 571 --output fr/data/scores_shards/missing_3.json --delay 0.2
+python fr/score_fr.py --start 650 --end 756 --output fr/data/scores_shards/missing_4.json --delay 0.2
+python fr/score_fr.py --start 841 --end 949 --output fr/data/scores_shards/missing_5.json --delay 0.2
+python fr/score_fr.py --start 1030 --end 1140 --output fr/data/scores_shards/missing_6.json --delay 0.2
+python fr/score_fr.py --start 1220 --end 1326 --output fr/data/scores_shards/missing_7.json --delay 0.2
+python fr/score_fr.py --start 1409 --end 1517 --output fr/data/scores_shards/missing_8.json --delay 0.2
