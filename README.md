@@ -4,6 +4,8 @@ Analyse de l'exposition de chaque métier de l'économie française à l'intelli
 
 Inspiré par le projet [karpathy.ai/jobs](https://karpathy.ai/jobs/).
 
+Déployé sur [fascinax.github.io/jobsfr](https://fascinax.github.io/jobsfr/).
+
 ![aperçu](image.png)
 ## Ce que contient ce dépôt
 
