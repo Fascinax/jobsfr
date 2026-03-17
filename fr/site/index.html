@@ -10,8 +10,10 @@
 :root {
   --bg: #0a0a0f;
   --bg2: #12121a;
+  --bg3: #171723;
   --fg: #e0e0e8;
   --fg2: #888894;
+  --accent: #e96a1a;
   --sidebar-w: 230px;
 }
 
@@ -50,6 +52,79 @@ body {
   line-height: 1.4;
 }
 #sidebar .subtitle a { color: var(--fg2); }
+
+.search-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg2);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+}
+
+.search-box:focus-within {
+  border-color: rgba(233,106,26,0.45);
+  box-shadow: 0 0 0 1px rgba(233,106,26,0.22);
+}
+
+.search-icon {
+  color: var(--fg2);
+  font-size: 12px;
+  line-height: 1;
+}
+
+#jobSearch {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+}
+
+#jobSearch::placeholder {
+  color: #70707d;
+}
+
+#clearSearch {
+  border: 0;
+  background: rgba(255,255,255,0.06);
+  color: var(--fg2);
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+}
+
+#clearSearch:hover {
+  background: rgba(255,255,255,0.12);
+  color: var(--fg);
+}
+
+.search-meta {
+  font-size: 11px;
+  color: var(--fg2);
+  line-height: 1.4;
+  min-height: 16px;
+}
 
 .stat-section {
   display: flex;
@@ -249,6 +324,39 @@ canvas#canvas {
   border-top: 1px solid rgba(255,255,255,0.06);
   padding-top: 8px;
 }
+
+#emptyState {
+  position: fixed;
+  top: 50%;
+  left: calc(var(--sidebar-w) + (100vw - var(--sidebar-w)) / 2);
+  transform: translate(-50%, -50%);
+  width: min(360px, calc(100vw - var(--sidebar-w) - 48px));
+  padding: 22px 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  background: rgba(18,18,26,0.94);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.24);
+  text-align: center;
+  z-index: 15;
+  display: none;
+}
+
+#emptyState.visible {
+  display: block;
+}
+
+#emptyState strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 6px;
+  color: #fff;
+}
+
+#emptyState span {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg2);
+}
 </style>
 </head>
 <body>
@@ -257,6 +365,16 @@ canvas#canvas {
   <div>
     <h1>🇫🇷 Exposition des Métiers Français à l'IA</h1>
     <div class="subtitle">ROME 4.0 &middot; couleur = exposition IA<br>Données <a href="https://francetravail.io/data/api">France Travail</a>, scoring LLM<br>Inspiré par <a href="https://karpathy.ai/jobs/">Karpathy</a></div>
+  </div>
+
+  <div class="search-section">
+    <div class="search-label">Trouver un métier</div>
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+      <input id="jobSearch" type="search" placeholder="Ex. développeur, infirmier, M1805" autocomplete="off">
+      <button id="clearSearch" type="button" aria-label="Effacer la recherche">×</button>
+    </div>
+    <div class="search-meta" id="searchMeta">Recherche par intitulé ou code ROME.</div>
   </div>
 
   <div class="view-toggle">
@@ -305,6 +423,11 @@ canvas#canvas {
 </div>
 
 <canvas id="canvas"></canvas>
+
+<div id="emptyState">
+  <strong>Aucun métier trouvé</strong>
+  <span>Affinez moins la recherche ou effacez le filtre pour revoir l’ensemble des métiers.</span>
+</div>
 
 <div id="tooltip">
   <div class="tt-title"></div>
@@ -418,6 +541,7 @@ function worstAspect(row, rowSum, side, totalArea, availableExtent) {
 // ── Rendering ──────────────────────────────────────────────────────────
 
 let data = [];
+let allData = [];
 let rects = [];
 let hovered = null;
 let currentView = "treemap";
@@ -426,8 +550,54 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 let dpr = window.devicePixelRatio || 1;
 
+const jobSearchInput = document.getElementById("jobSearch");
+const clearSearchButton = document.getElementById("clearSearch");
+const searchMeta = document.getElementById("searchMeta");
+const emptyState = document.getElementById("emptyState");
+
 const MARGIN = 12;
 const GAP = 1.5;
+
+function normalizeSearchValue(value) {
+  return (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function updateSearchUi(query, resultCount, totalCount) {
+  clearSearchButton.style.display = query ? "inline-flex" : "none";
+  if (!query) {
+    searchMeta.textContent = "Recherche par intitulé ou code ROME.";
+    return;
+  }
+
+  const métierLabel = resultCount > 1 ? "métiers" : "métier";
+  searchMeta.textContent = `${resultCount} ${métierLabel} trouvé${resultCount > 1 ? "s" : ""} sur ${totalCount}.`;
+}
+
+function updateEmptyState() {
+  emptyState.classList.toggle("visible", data.length === 0);
+}
+
+function applySearch(rawQuery) {
+  const query = normalizeSearchValue(rawQuery);
+  data = !query
+    ? [...allData]
+    : allData.filter(d => {
+        const title = normalizeSearchValue(d.title);
+        const romeCode = normalizeSearchValue(d.code_rome);
+        return title.includes(query) || romeCode.includes(query);
+      });
+
+  hovered = null;
+  hideTooltip();
+  updateSearchUi(query, data.length, allData.length);
+  updateEmptyState();
+  computeStats();
+  resize();
+}
 
 function setView(view) {
   currentView = view;
@@ -636,6 +806,12 @@ function layoutColumns() {
   const scores = Object.keys(byExposure).map(Number).sort((a, b) => a - b);
   const numCols = scores.length;
 
+  if (totalItems === 0 || numCols === 0) {
+    colRects = [];
+    colRects._meta = null;
+    return;
+  }
+
   const colCounts = scores.map(s => byExposure[s].length);
   const totalGap = colGap * (numCols - 1);
   const availW = plotW - totalGap;
@@ -790,8 +966,9 @@ function computeStats() {
   const totalOffres = data.reduce((s, d) => s + (d.nb_offres || 0), 0);
 
   document.getElementById("statTotalMetiers").textContent = totalMetiers;
-  document.getElementById("statAvgExposure").innerHTML =
-    `<span style="color:${exposureColorCSS(avgExposure, 1)}">${avgExposure.toFixed(1)}</span>`;
+  document.getElementById("statAvgExposure").innerHTML = scored.length > 0
+    ? `<span style="color:${exposureColorCSS(avgExposure, 1)}">${avgExposure.toFixed(1)}</span>`
+    : "—";
 
   const maxHist = Math.max(...histogram);
   const histEl = document.getElementById("histogram");
@@ -887,11 +1064,20 @@ function drawGradientLegend() {
 fetch("data.json")
   .then(r => r.json())
   .then(d => {
-    data = d;
-    computeStats();
+    allData = d;
     drawGradientLegend();
-    resize();
+    applySearch("");
   });
+
+jobSearchInput.addEventListener("input", (event) => {
+  applySearch(event.target.value);
+});
+
+clearSearchButton.addEventListener("click", () => {
+  jobSearchInput.value = "";
+  applySearch("");
+  jobSearchInput.focus();
+});
 
 window.addEventListener("resize", resize);
 </script>
